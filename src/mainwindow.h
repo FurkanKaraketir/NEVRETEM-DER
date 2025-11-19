@@ -81,6 +81,7 @@ private slots:
     // Excel import/export slots
     void onExportToExcel();
     void onImportFromExcel();
+    void onShowStatistics();
 
 private:
     void setupUI();
@@ -168,6 +169,7 @@ private:
     QAction* m_signOutAction;
     QAction* m_exportExcelAction;
     QAction* m_importExcelAction;
+    QAction* m_statisticsAction;
 };
 
 #endif // MAINWINDOW_H

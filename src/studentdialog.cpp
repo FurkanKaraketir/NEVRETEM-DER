@@ -49,11 +49,16 @@ StudentDialog::~StudentDialog()
 void StudentDialog::setupUI()
 {
     setModal(true);
-    resize(500, 600);
+    resize(800, 450);
     
     m_mainLayout = new QVBoxLayout(this);
     
-    // Personal Information Group
+    // Create horizontal layout for two-column design
+    QHBoxLayout* contentLayout = new QHBoxLayout();
+    
+    // LEFT COLUMN - Personal Information with Photo
+    QVBoxLayout* leftColumn = new QVBoxLayout();
+    
     m_personalGroup = new QGroupBox("Kişisel Bilgiler");
     m_personalLayout = new QFormLayout(m_personalGroup);
     
@@ -69,7 +74,7 @@ void StudentDialog::setupUI()
     m_personalLayout->addRow("E-posta:", m_emailEdit);
     
     m_descriptionEdit = new QTextEdit();
-    m_descriptionEdit->setMaximumHeight(80);
+    m_descriptionEdit->setMaximumHeight(60);
     m_descriptionEdit->setPlaceholderText("Kısa açıklama veya rol");
     m_personalLayout->addRow("Açıklama:", m_descriptionEdit);
     
@@ -88,9 +93,9 @@ void StudentDialog::setupUI()
     
     m_personalLayout->addRow("Fotoğraf:", m_photoLayout);
     
-    // Photo preview
+    // Photo preview - smaller size
     m_photoPreview = new QLabel();
-    m_photoPreview->setFixedSize(150, 150);
+    m_photoPreview->setFixedSize(120, 120);
     m_photoPreview->setStyleSheet("border: 1px solid gray; background-color: #f0f0f0;");
     m_photoPreview->setAlignment(Qt::AlignCenter);
     m_photoPreview->setText("Fotoğraf yok");
@@ -114,7 +119,11 @@ void StudentDialog::setupUI()
     m_photoURLEdit->setVisible(false);
     m_personalLayout->addRow("Fotoğraf URL:", m_photoURLEdit);
     
-    m_mainLayout->addWidget(m_personalGroup);
+    leftColumn->addWidget(m_personalGroup);
+    leftColumn->addStretch();
+    
+    // RIGHT COLUMN - Academic and Contact Information
+    QVBoxLayout* rightColumn = new QVBoxLayout();
     
     // Academic Information Group
     m_academicGroup = new QGroupBox("Akademik Bilgiler");
@@ -143,7 +152,7 @@ void StudentDialog::setupUI()
     m_graduationCheck = new QCheckBox("Üniversiteden mezun oldu");
     m_academicLayout->addRow("Üniversite Mezuniyeti:", m_graduationCheck);
     
-    m_mainLayout->addWidget(m_academicGroup);
+    rightColumn->addWidget(m_academicGroup);
     
     // Contact Information Group
     m_contactGroup = new QGroupBox("İletişim Bilgileri");
@@ -162,7 +171,14 @@ void StudentDialog::setupUI()
     m_phoneFormatLabel->setVisible(false);
     m_contactLayout->addRow("", m_phoneFormatLabel);
     
-    m_mainLayout->addWidget(m_contactGroup);
+    rightColumn->addWidget(m_contactGroup);
+    rightColumn->addStretch();
+    
+    // Add columns to horizontal layout
+    contentLayout->addLayout(leftColumn, 1);
+    contentLayout->addLayout(rightColumn, 1);
+    
+    m_mainLayout->addLayout(contentLayout);
     
     // Validation label
     m_validationLabel = new QLabel();

@@ -12,6 +12,7 @@
 #include "mainwindow.h"
 #include "logindialog.h"
 #include "firebaseauthservice.h"
+#include "thememanager.h"
 
 // Declare logging categories
 Q_LOGGING_CATEGORY(authLog, "auth")
@@ -90,160 +91,19 @@ int main(int argc, char *argv[])
     // Set application style
     app.setStyle(QStyleFactory::create("Fusion"));
     
-    // Apply elegant theme inspired by the logo
-    QPalette elegantPalette;
-    elegantPalette.setColor(QPalette::Window, QColor(30, 58, 95)); // Deep blue from logo
-    elegantPalette.setColor(QPalette::WindowText, QColor(212, 175, 55)); // Gold from logo
-    elegantPalette.setColor(QPalette::Base, QColor(20, 40, 70)); // Darker blue
-    elegantPalette.setColor(QPalette::AlternateBase, QColor(35, 65, 105)); // Lighter blue
-    elegantPalette.setColor(QPalette::ToolTipBase, QColor(212, 175, 55));
-    elegantPalette.setColor(QPalette::ToolTipText, QColor(30, 58, 95));
-    elegantPalette.setColor(QPalette::Text, QColor(212, 175, 55)); // Gold text
-    elegantPalette.setColor(QPalette::Button, QColor(44, 90, 160)); // Medium blue
-    elegantPalette.setColor(QPalette::ButtonText, QColor(212, 175, 55)); // Gold text
-    elegantPalette.setColor(QPalette::BrightText, QColor(255, 215, 0)); // Bright gold
-    elegantPalette.setColor(QPalette::Link, QColor(184, 134, 11)); // Darker gold
-    elegantPalette.setColor(QPalette::Highlight, QColor(212, 175, 55)); // Gold highlight
-    elegantPalette.setColor(QPalette::HighlightedText, QColor(30, 58, 95)); // Blue text on gold
-    app.setPalette(elegantPalette);
+    // Load and apply themed stylesheet using ThemeManager
+    qCInfo(configLog) << "Loading application theme...";
+    ThemeManager themeManager;
+    QString stylesheet = themeManager.loadThemedStylesheet(":/resources/style.qss");
     
-    // Apply elegant stylesheet inspired by the logo
-    app.setStyleSheet(R"(
-        QGroupBox {
-            font-weight: bold;
-            border: 2px solid #D4AF37;
-            border-radius: 8px;
-            margin-top: 12px;
-            padding-top: 12px;
-            color: #D4AF37;
-        }
-        
-        QGroupBox::title {
-            subcontrol-origin: margin;
-            left: 15px;
-            padding: 0 8px 0 8px;
-            color: #D4AF37;
-            font-weight: bold;
-        }
-        
-        QPushButton {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                stop:0 #2C5AA0, stop:1 #1E3A5F);
-            border: 2px solid #D4AF37;
-            border-radius: 6px;
-            padding: 8px 16px;
-            min-width: 90px;
-            color: #D4AF37;
-            font-weight: bold;
-        }
-        
-        QPushButton:hover {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                stop:0 #3A6BB0, stop:1 #2A4A7F);
-            border-color: #FFD700;
-            color: #FFD700;
-        }
-        
-        QPushButton:pressed {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                stop:0 #1E3A5F, stop:1 #142A4F);
-        }
-        
-        QPushButton:disabled {
-            background-color: #2A2A2A;
-            color: #666666;
-            border-color: #444444;
-        }
-        
-        QLineEdit, QTextEdit, QSpinBox, QComboBox {
-            background-color: #142A4F;
-            border: 2px solid #2C5AA0;
-            border-radius: 5px;
-            padding: 6px;
-            color: #D4AF37;
-            selection-background-color: #D4AF37;
-            selection-color: #1E3A5F;
-        }
-        
-        QLineEdit:focus, QTextEdit:focus, QSpinBox:focus, QComboBox:focus {
-            border-color: #D4AF37;
-            background-color: #1E3A5F;
-        }
-        
-        QTableWidget {
-            gridline-color: #2C5AA0;
-            selection-background-color: #D4AF37;
-            selection-color: #1E3A5F;
-            alternate-background-color: #233A65;
-        }
-        
-        QTableWidget::item {
-            padding: 6px;
-            color: #D4AF37;
-        }
-        
-        QTableWidget::item:selected {
-            background-color: #D4AF37;
-            color: #1E3A5F;
-        }
-        
-        QHeaderView::section {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                stop:0 #2C5AA0, stop:1 #1E3A5F);
-            padding: 8px;
-            border: 1px solid #D4AF37;
-            font-weight: bold;
-            color: #D4AF37;
-        }
-        
-        QProgressBar {
-            border: 2px solid #D4AF37;
-            border-radius: 5px;
-            text-align: center;
-            color: #1E3A5F;
-            font-weight: bold;
-        }
-        
-        QProgressBar::chunk {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
-                stop:0 #D4AF37, stop:1 #FFD700);
-            border-radius: 3px;
-        }
-        
-        QCheckBox::indicator {
-            width: 18px;
-            height: 18px;
-        }
-        
-        QCheckBox::indicator:unchecked {
-            background-color: #142A4F;
-            border: 2px solid #2C5AA0;
-            border-radius: 3px;
-        }
-        
-        QCheckBox::indicator:checked {
-            background-color: #D4AF37;
-            border: 2px solid #D4AF37;
-            border-radius: 3px;
-        }
-        
-        QSplitter::handle {
-            background-color: #D4AF37;
-        }
-        
-        QSplitter::handle:horizontal {
-            width: 3px;
-        }
-        
-        QSplitter::handle:vertical {
-            height: 3px;
-        }
-        
-        QDialog {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                stop:0 #1E3A5F, stop:1 #2C5AA0);
-        }
-    )");
+    if (stylesheet.isEmpty()) {
+        qCWarning(configLog) << "Failed to load stylesheet, using fallback theme";
+        // Fallback: minimal styling if QSS fails to load
+        app.setStyleSheet("QMainWindow { background-color: #0A2E3C; }");
+    } else {
+        app.setStyleSheet(stylesheet);
+        qCInfo(configLog) << "Theme loaded successfully - Dark Cyan & Gold";
+    }
     
     // Load settings from config.ini file
     // Look for config.ini in the application directory first, then current directory

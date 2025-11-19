@@ -40,6 +40,8 @@ set(SOURCES
     src/firebasestorageservice.cpp
     src/firebaseauthservice.cpp
     src/logindialog.cpp
+    src/statisticsdialog.cpp
+    src/thememanager.cpp
 )
 
 set(HEADERS
@@ -50,6 +52,8 @@ set(HEADERS
     src/firebasestorageservice.h
     src/firebaseauthservice.h
     src/logindialog.h
+    src/statisticsdialog.h
+    src/thememanager.h
 )
 
 set(UI_FILES

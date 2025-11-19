@@ -23,6 +23,7 @@
 #include "xlsxdocument.h"
 #include "xlsxformat.h"
 #include "xlsxcellrange.h"
+#include "statisticsdialog.h"
 
 using namespace QXlsx;
 
@@ -118,13 +119,14 @@ void MainWindow::setupUI()
     
     // Header section with logo
     QWidget* headerWidget = new QWidget();
+    headerWidget->setObjectName("headerWidget");
     headerWidget->setFixedHeight(80);
-    headerWidget->setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #2C5AA0, stop:1 #1E3A5F); border-bottom: 3px solid #D4AF37;");
     
     QHBoxLayout* headerLayout = new QHBoxLayout(headerWidget);
     
     // Logo in header
     QLabel* headerLogoLabel = new QLabel();
+    headerLogoLabel->setObjectName("headerLogoLabel");
     QStringList logoPaths = {
         "src/logo.jpg",
         "logo.jpg", 
@@ -150,7 +152,6 @@ void MainWindow::setupUI()
         headerLogoLabel->setPixmap(headerLogoPixmap);
     } else {
         headerLogoLabel->setText("NEVRETEM-DER");
-        headerLogoLabel->setStyleSheet("color: #D4AF37; font-weight: bold; font-size: 14px;");
     }
     
     headerLogoLabel->setFixedSize(60, 60);
@@ -158,7 +159,7 @@ void MainWindow::setupUI()
     
     // Header title
     QLabel* headerTitleLabel = new QLabel("NEVRETEM-DER MBS - Mezun Bilgi Sistemi");
-    headerTitleLabel->setStyleSheet("color: #D4AF37; font-weight: bold; font-size: 16px; margin-left: 15px;");
+    headerTitleLabel->setObjectName("headerTitleLabel");
     headerTitleLabel->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
     
     headerLayout->addWidget(headerLogoLabel);
@@ -291,8 +292,8 @@ void MainWindow::setupUI()
     
     // Add actual photo display
     m_detailsPhotoLabel = new QLabel();
+    m_detailsPhotoLabel->setProperty("class", "detailsPhotoLabelEmpty");
     m_detailsPhotoLabel->setFixedSize(200, 200);
-    m_detailsPhotoLabel->setStyleSheet("border: 2px solid #ccc; border-radius: 8px; background-color: #f9f9f9;");
     m_detailsPhotoLabel->setAlignment(Qt::AlignCenter);
     m_detailsPhotoLabel->setScaledContents(true);
     m_detailsPhotoLabel->setText("Fotoğraf Yok");
@@ -333,114 +334,8 @@ void MainWindow::setupFilterUI()
 {
     // Create filter frame
     m_filterFrame = new QFrame();
+    m_filterFrame->setObjectName("filterFrame");
     m_filterFrame->setFrameStyle(QFrame::StyledPanel | QFrame::Raised);
-    m_filterFrame->setStyleSheet(
-        "QFrame {"
-        "    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "        stop:0 #2B7A8C, stop:0.5 #1E5F6F, stop:1 #1A5565);"
-        "    border: 2px solid #C9A962;"
-        "    border-radius: 12px;"
-        "    margin: 8px;"
-        "    padding: 18px;"
-        "    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);"
-        "}"
-        "QLabel {"
-        "    font-weight: bold;"
-        "    color: #E5D4A4;"
-        "    font-size: 13px;"
-        "    margin-bottom: 5px;"
-        "    margin-top: 2px;"
-        "}"
-        "QComboBox, QLineEdit, QSpinBox {"
-        "    padding: 10px 12px;"
-        "    border: 2px solid #C9A962;"
-        "    border-radius: 8px;"
-        "    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "        stop:0 #1A5565, stop:1 #142A4F);"
-        "    color: #E5D4A4;"
-        "    font-size: 12px;"
-        "    selection-background-color: #C9A962;"
-        "    selection-color: #1E5F6F;"
-        "    min-height: 16px;"
-        "}"
-        "QComboBox:focus, QLineEdit:focus, QSpinBox:focus {"
-        "    border-color: #FFD700;"
-        "    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "        stop:0 #1E5F6F, stop:1 #1A5565);"
-        "    outline: none;"
-        "}"
-        "QComboBox:hover, QLineEdit:hover, QSpinBox:hover {"
-        "    border-color: #E5D4A4;"
-        "    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "        stop:0 #1C6175, stop:1 #1A5565);"
-        "}"
-        "QPushButton {"
-        "    padding: 10px 20px;"
-        "    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "        stop:0 #C9A962, stop:1 #A67C52);"
-        "    color: #1E5F6F;"
-        "    border: 2px solid #A67C52;"
-        "    border-radius: 8px;"
-        "    font-weight: bold;"
-        "    font-size: 12px;"
-        "    min-width: 120px;"
-        "    min-height: 18px;"
-        "}"
-        "QPushButton:hover {"
-        "    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "        stop:0 #FFD700, stop:1 #C9A962);"
-        "    border-color: #FFD700;"
-        "    color: #1A5565;"
-        "}"
-        "QPushButton:pressed {"
-        "    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "        stop:0 #A67C52, stop:1 #8B6B42);"
-        "    border-color: #8B6B42;"
-        "}"
-        "QComboBox::drop-down {"
-        "    border: none;"
-        "    width: 24px;"
-        "    background: transparent;"
-        "}"
-        "QComboBox::down-arrow {"
-        "    image: none;"
-        "    border-left: 6px solid transparent;"
-        "    border-right: 6px solid transparent;"
-        "    border-top: 6px solid #E5D4A4;"
-        "    margin-right: 8px;"
-        "}"
-        "QComboBox::down-arrow:hover {"
-        "    border-top-color: #FFD700;"
-        "}"
-        "QSpinBox::up-button, QSpinBox::down-button {"
-        "    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "        stop:0 #C9A962, stop:1 #A67C52);"
-        "    border: 1px solid #A67C52;"
-        "    border-radius: 4px;"
-        "    width: 18px;"
-        "    margin: 1px;"
-        "}"
-        "QSpinBox::up-button:hover, QSpinBox::down-button:hover {"
-        "    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "        stop:0 #FFD700, stop:1 #C9A962);"
-        "}"
-        "QSpinBox::up-arrow, QSpinBox::down-arrow {"
-        "    width: 8px;"
-        "    height: 8px;"
-        "}"
-        "QSpinBox::up-arrow {"
-        "    image: none;"
-        "    border-left: 4px solid transparent;"
-        "    border-right: 4px solid transparent;"
-        "    border-bottom: 4px solid #1E5F6F;"
-        "}"
-        "QSpinBox::down-arrow {"
-        "    image: none;"
-        "    border-left: 4px solid transparent;"
-        "    border-right: 4px solid transparent;"
-        "    border-top: 4px solid #1E5F6F;"
-        "}"
-    );
     m_filterFrame->setVisible(false); // Initially hidden
     
     m_filterLayout = new QGridLayout(m_filterFrame);
@@ -496,8 +391,8 @@ void MainWindow::setupFilterUI()
     m_yearFromSpinBox->setMinimum(0);
     
     QLabel* dashLabel = new QLabel("-");
+    dashLabel->setObjectName("yearDashLabel");
     dashLabel->setAlignment(Qt::AlignCenter);
-    dashLabel->setStyleSheet("color: #E5D4A4; font-weight: bold; font-size: 14px;");
     
     m_yearToSpinBox = new QSpinBox();
     m_yearToSpinBox->setRange(1990, 2100);
@@ -523,31 +418,8 @@ void MainWindow::setupFilterUI()
     
     // Row 3: Clear filters button with enhanced styling
     m_clearFiltersButton = new QPushButton("🗑️ Filtreleri Temizle");
+    m_clearFiltersButton->setObjectName("clearFiltersButton");
     m_clearFiltersButton->setIcon(style()->standardIcon(QStyle::SP_DialogResetButton));
-    m_clearFiltersButton->setStyleSheet(
-        "QPushButton {"
-        "    padding: 12px 24px;"
-        "    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "        stop:0 #8B4513, stop:1 #654321);"
-        "    color: #E5D4A4;"
-        "    border: 2px solid #654321;"
-        "    border-radius: 8px;"
-        "    font-weight: bold;"
-        "    font-size: 12px;"
-        "    min-width: 140px;"
-        "    min-height: 20px;"
-        "}"
-        "QPushButton:hover {"
-        "    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "        stop:0 #A0522D, stop:1 #8B4513);"
-        "    border-color: #A0522D;"
-        "    color: #FFD700;"
-        "}"
-        "QPushButton:pressed {"
-        "    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, "
-        "        stop:0 #654321, stop:1 #4A2C17);"
-        "}"
-    );
     m_filterLayout->addWidget(m_clearFiltersButton, 3, 0, 1, 4);
     
     // Set column stretch to make the layout more balanced
@@ -617,6 +489,14 @@ void MainWindow::setupMenuBar()
     m_exitAction->setShortcut(QKeySequence::Quit);
     connect(m_exitAction, &QAction::triggered, this, &QWidget::close);
     fileMenu->addAction(m_exitAction);
+    
+    // View menu
+    QMenu* viewMenu = menuBar()->addMenu("&Görünüm");
+    
+    m_statisticsAction = new QAction("&İstatistik Paneli", this);
+    m_statisticsAction->setShortcut(QKeySequence("Ctrl+T"));
+    connect(m_statisticsAction, &QAction::triggered, this, &MainWindow::onShowStatistics);
+    viewMenu->addAction(m_statisticsAction);
     
     // Help menu
     QMenu* helpMenu = menuBar()->addMenu("&Yardım");
@@ -798,17 +678,22 @@ void MainWindow::onClearFilters()
     m_nameFilterEdit->clear();
     m_emailFilterEdit->clear();
     
-    // Reset combo boxes to "All" option
+    // Reset combos
     m_fieldFilterCombo->setCurrentIndex(0);
     m_schoolFilterCombo->setCurrentIndex(0);
     m_graduationFilterCombo->setCurrentIndex(0);
     
-    // Reset year range
-    m_yearFromSpinBox->setValue(0); // Special value for "Başlangıç"
-    m_yearToSpinBox->setValue(9999); // Special value for "Bitiş"
-    
-    // This will trigger filterStudents() through the connected signals
+    // Reset spinboxes
+    m_yearFromSpinBox->setValue(0); // Special value "Başlangıç"
+    m_yearToSpinBox->setValue(9999); // Special value "Bitiş"
 }
+
+void MainWindow::onShowStatistics()
+{
+    StatisticsDialog dialog(m_allStudents, this);
+    dialog.exec();
+}
+
 
 void MainWindow::onTableItemDoubleClicked(int row, int column)
 {
@@ -1021,8 +906,19 @@ void MainWindow::populateTable(const QList<Student>& students)
         m_photoLabels.clear();
     }
     
+    // Save column widths before clearing
+    QList<int> columnWidths;
+    QHeaderView* header = m_studentsTable->horizontalHeader();
+    for (int i = 0; i < m_studentsTable->columnCount(); ++i) {
+        columnWidths.append(header->sectionSize(i));
+    }
+    
     // Clear current selection to avoid issues
     m_studentsTable->clearSelection();
+    
+    // Temporarily disable sorting to prevent column width issues
+    bool sortingWasEnabled = m_studentsTable->isSortingEnabled();
+    m_studentsTable->setSortingEnabled(false);
     
     // Clear all existing rows first (including cell widgets)
     m_studentsTable->setRowCount(0);
@@ -1043,15 +939,15 @@ void MainWindow::populateTable(const QList<Student>& students)
         // Photo column
         QLabel* photoLabel = new QLabel();
         photoLabel->setFixedSize(70, 70);
-        photoLabel->setStyleSheet("border: 1px solid #ccc; border-radius: 4px;");
         photoLabel->setAlignment(Qt::AlignCenter);
         photoLabel->setScaledContents(true);
         
         if (!student.getPhotoURL().isEmpty()) {
+            photoLabel->setProperty("class", "photoLabel");
             loadStudentPhoto(photoLabel, student.getPhotoURL());
         } else {
+            photoLabel->setProperty("class", "photoLabelEmpty");
             photoLabel->setText("Fotoğraf Yok");
-            photoLabel->setStyleSheet("border: 1px solid #ccc; border-radius: 4px; color: #888; font-size: 10px;");
         }
         
         m_studentsTable->setCellWidget(i, 0, photoLabel);
@@ -1075,6 +971,16 @@ void MainWindow::populateTable(const QList<Student>& students)
         
         // Store student ID in the name item's data
         m_studentsTable->item(i, 1)->setData(Qt::UserRole, student.getId());
+    }
+    
+    // Restore column widths
+    for (int i = 0; i < qMin(columnWidths.size(), m_studentsTable->columnCount()); ++i) {
+        header->resizeSection(i, columnWidths[i]);
+    }
+    
+    // Re-enable sorting if it was enabled before
+    if (sortingWasEnabled) {
+        m_studentsTable->setSortingEnabled(true);
     }
     
     qCInfo(dataLog) << "Table population completed - rows:" << m_studentsTable->rowCount() << "columns:" << m_studentsTable->columnCount();
@@ -1111,8 +1017,10 @@ void MainWindow::updateStudentDetails(const Student& student)
     } else {
         m_currentDetailsPhotoUrl.clear();
         m_detailsPhotoLabel->clear();
+        m_detailsPhotoLabel->setProperty("class", "detailsPhotoLabelEmpty");
+        m_detailsPhotoLabel->style()->unpolish(m_detailsPhotoLabel);
+        m_detailsPhotoLabel->style()->polish(m_detailsPhotoLabel);
         m_detailsPhotoLabel->setText("Fotoğraf Yok");
-        m_detailsPhotoLabel->setStyleSheet("border: 2px solid #ccc; border-radius: 8px; background-color: #f9f9f9; color: #888;");
     }
 }
 
@@ -1131,8 +1039,10 @@ void MainWindow::clearStudentDetails()
     // Clear details photo
     m_currentDetailsPhotoUrl.clear();
     m_detailsPhotoLabel->clear();
+    m_detailsPhotoLabel->setProperty("class", "detailsPhotoLabelEmpty");
+    m_detailsPhotoLabel->style()->unpolish(m_detailsPhotoLabel);
+    m_detailsPhotoLabel->style()->polish(m_detailsPhotoLabel);
     m_detailsPhotoLabel->setText("Fotoğraf Yok");
-    m_detailsPhotoLabel->setStyleSheet("border: 2px solid #ccc; border-radius: 8px; background-color: #f9f9f9; color: #888;");
 }
 
 void MainWindow::populateFilterDropdowns()
@@ -1324,10 +1234,26 @@ void MainWindow::filterStudents()
 
 Student MainWindow::getStudentFromRow(int row) const
 {
-    if (row < 0 || row >= m_filteredStudents.size()) {
+    if (row < 0 || row >= m_studentsTable->rowCount()) {
         return Student();
     }
-    return m_filteredStudents[row];
+    
+    // Get the student ID from the table item (which moves with sorting)
+    QTableWidgetItem* item = m_studentsTable->item(row, 1); // Name column at index 1
+    if (!item) {
+        return Student();
+    }
+    
+    QString studentId = item->data(Qt::UserRole).toString();
+    
+    // Find the student in m_filteredStudents by ID
+    for (const Student& student : m_filteredStudents) {
+        if (student.getId() == studentId) {
+            return student;
+        }
+    }
+    
+    return Student();
 }
 
 int MainWindow::findStudentRow(const QString& studentId) const
@@ -1364,8 +1290,10 @@ void MainWindow::loadStudentPhoto(QLabel* photoLabel, const QString& photoUrl)
         m_photoLabels[photoUrl] = photoLabel;
         m_storageService->loadImage(photoUrl);
     } else {
-                photoLabel->setText("Servis Yok");
-        photoLabel->setStyleSheet("border: 1px solid #ccc; border-radius: 4px; color: #888; font-size: 10px;");
+        photoLabel->setProperty("class", "photoLabelEmpty");
+        photoLabel->style()->unpolish(photoLabel);
+        photoLabel->style()->polish(photoLabel);
+        photoLabel->setText("Servis Yok");
     }
 }
 
@@ -1374,8 +1302,10 @@ void MainWindow::loadStudentDetailsPhoto(const QString& photoUrl)
     if (photoUrl.isEmpty()) return;
     
     // Set loading state for details photo
-        m_detailsPhotoLabel->setText("Yüklüyor...");
-    m_detailsPhotoLabel->setStyleSheet("border: 2px solid #ccc; border-radius: 8px; background-color: #f9f9f9; color: #666;");
+    m_detailsPhotoLabel->setProperty("class", "detailsPhotoLabelEmpty");
+    m_detailsPhotoLabel->style()->unpolish(m_detailsPhotoLabel);
+    m_detailsPhotoLabel->style()->polish(m_detailsPhotoLabel);
+    m_detailsPhotoLabel->setText("Yüklüyor...");
     
     // Use the authenticated storage service to load the image
     if (m_storageService) {
@@ -1385,7 +1315,6 @@ void MainWindow::loadStudentDetailsPhoto(const QString& photoUrl)
         m_storageService->loadImage(photoUrl);
     } else {
         m_detailsPhotoLabel->setText("Servis Yok");
-        m_detailsPhotoLabel->setStyleSheet("border: 2px solid #ccc; border-radius: 8px; background-color: #f9f9f9; color: #888;");
     }
 }
 
@@ -1424,12 +1353,16 @@ void MainWindow::onImageLoaded(const QString& imageUrl, const QByteArray& imageD
             QPixmap pixmap;
             if (pixmap.loadFromData(imageData)) {
                 qCDebug(dataLog) << "Details pixmap created successfully, size:" << pixmap.size();
+                photoLabel->setProperty("class", "detailsPhotoLabel");
+                photoLabel->style()->unpolish(photoLabel);
+                photoLabel->style()->polish(photoLabel);
                 photoLabel->setPixmap(pixmap);
-                photoLabel->setStyleSheet("border: 2px solid #ccc; border-radius: 8px;");
             } else {
                 qCWarning(dataLog) << "Failed to create details pixmap from image data";
+                photoLabel->setProperty("class", "detailsPhotoLabelEmpty");
+                photoLabel->style()->unpolish(photoLabel);
+                photoLabel->style()->polish(photoLabel);
                 photoLabel->setText("Geçersiz Resim");
-                photoLabel->setStyleSheet("border: 2px solid #ccc; border-radius: 8px; background-color: #f9f9f9; color: #888;");
             }
         }
         // Clean up the mapping
@@ -1443,12 +1376,16 @@ void MainWindow::onImageLoaded(const QString& imageUrl, const QByteArray& imageD
             QPixmap pixmap;
             if (pixmap.loadFromData(imageData)) {
                 qCDebug(dataLog) << "Table pixmap created successfully, size:" << pixmap.size();
+                photoLabel->setProperty("class", "photoLabel");
+                photoLabel->style()->unpolish(photoLabel);
+                photoLabel->style()->polish(photoLabel);
                 photoLabel->setPixmap(pixmap);
-                photoLabel->setStyleSheet("border: 1px solid #ccc; border-radius: 4px;");
             } else {
                 qCWarning(dataLog) << "Failed to create table pixmap from image data";
+                photoLabel->setProperty("class", "photoLabelEmpty");
+                photoLabel->style()->unpolish(photoLabel);
+                photoLabel->style()->polish(photoLabel);
                 photoLabel->setText("Geçersiz");
-                photoLabel->setStyleSheet("border: 1px solid #ccc; border-radius: 4px; color: #888; font-size: 10px;");
             }
         }
         // Clean up the mapping
@@ -1469,8 +1406,10 @@ void MainWindow::onImageLoadFailed(const QString& imageUrl, const QString& error
     if (m_photoLabels.contains(detailsKey)) {
         QLabel* photoLabel = m_photoLabels[detailsKey];
         if (photoLabel) {
+            photoLabel->setProperty("class", "detailsPhotoLabelEmpty");
+            photoLabel->style()->unpolish(photoLabel);
+            photoLabel->style()->polish(photoLabel);
             photoLabel->setText("Yükleme Başarısız");
-            photoLabel->setStyleSheet("border: 2px solid #ccc; border-radius: 8px; background-color: #f9f9f9; color: #888;");
         }
         // Clean up the mapping
         m_photoLabels.remove(detailsKey);
@@ -1480,8 +1419,10 @@ void MainWindow::onImageLoadFailed(const QString& imageUrl, const QString& error
     if (m_photoLabels.contains(imageUrl)) {
         QLabel* photoLabel = m_photoLabels[imageUrl];
         if (photoLabel) {
+            photoLabel->setProperty("class", "photoLabelEmpty");
+            photoLabel->style()->unpolish(photoLabel);
+            photoLabel->style()->polish(photoLabel);
             photoLabel->setText("Başarısız");
-            photoLabel->setStyleSheet("border: 1px solid #ccc; border-radius: 4px; color: #888; font-size: 10px;");
         }
         // Clean up the mapping
         m_photoLabels.remove(imageUrl);
