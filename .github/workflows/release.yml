@@ -18,13 +18,28 @@ jobs:
       with:
         version: '6.9.1'
         arch: 'win64_mingw'
-        tools: 'tools_mingw1310 qt.tools.mingw1310'
+        tools: 'tools_mingw1310'
         cache: true
         
     - name: Set up MinGW
       run: |
-        echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-        echo "Adding MinGW to PATH"
+        echo "$env:IQTA_TOOLS\mingw1310_64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        echo "Adding MinGW to PATH: $env:IQTA_TOOLS\mingw1310_64\bin"
+        
+    - name: Verify Environment
+      run: |
+        Write-Host "Qt6_DIR: $env:Qt6_DIR"
+        Write-Host "IQTA_TOOLS: $env:IQTA_TOOLS"
+        Write-Host "MinGW Path: $env:IQTA_TOOLS\mingw1310_64\bin"
+        Write-Host "Checking if MinGW exists..."
+        if (Test-Path "$env:IQTA_TOOLS\mingw1310_64\bin\gcc.exe") {
+            Write-Host "✓ GCC found"
+            & "$env:IQTA_TOOLS\mingw1310_64\bin\gcc.exe" --version
+        }
+        if (Test-Path "$env:IQTA_TOOLS\mingw1310_64\bin\mingw32-make.exe") {
+            Write-Host "✓ mingw32-make found"
+        }
+        Write-Host "PATH: $env:PATH"
         
     - name: Configure CMake
       run: |
@@ -58,12 +73,15 @@ jobs:
         }
         
         # Run windeployqt
-        & "$env:Qt6_DIR\bin\windeployqt.exe" --verbose 2 --dir "deploy_windows" --libdir "deploy_windows" --plugindir "deploy_windows\plugins" --no-translations --no-system-d3d-compiler --no-opengl-sw --no-compiler-runtime "deploy_windows\StudentManager.exe"
+        $windeployqt = "$env:Qt6_DIR\bin\windeployqt.exe"
+        & $windeployqt --verbose 2 --dir "deploy_windows" --libdir "deploy_windows" --plugindir "deploy_windows\plugins" --no-translations --no-system-d3d-compiler --no-opengl-sw --no-compiler-runtime "deploy_windows\StudentManager.exe"
         
         # Copy MinGW runtime libraries
-        Copy-Item "$env:IQTA_TOOLS\mingw1310_64\bin\libgcc_s_seh-1.dll" "deploy_windows\" -ErrorAction SilentlyContinue
-        Copy-Item "$env:IQTA_TOOLS\mingw1310_64\bin\libstdc++-6.dll" "deploy_windows\" -ErrorAction SilentlyContinue
-        Copy-Item "$env:IQTA_TOOLS\mingw1310_64\bin\libwinpthread-1.dll" "deploy_windows\" -ErrorAction SilentlyContinue
+        $mingw_bin = "$env:IQTA_TOOLS\mingw1310_64\bin"
+        Write-Host "Copying MinGW DLLs from: $mingw_bin"
+        Copy-Item "$mingw_bin\libgcc_s_seh-1.dll" "deploy_windows\" -ErrorAction Stop
+        Copy-Item "$mingw_bin\libstdc++-6.dll" "deploy_windows\" -ErrorAction Stop
+        Copy-Item "$mingw_bin\libwinpthread-1.dll" "deploy_windows\" -ErrorAction Stop
         
         # Create launcher script
         @"
