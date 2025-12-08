@@ -50,7 +50,10 @@ jobs:
     - name: Build
       run: |
         cd build
-        mingw32-make -j$env:NUMBER_OF_PROCESSORS
+        $cores = $env:NUMBER_OF_PROCESSORS
+        if (-not $cores) { $cores = "4" }
+        Write-Host "Building with $cores parallel jobs..."
+        mingw32-make -j $cores
         
     - name: Deploy Windows
       run: |
