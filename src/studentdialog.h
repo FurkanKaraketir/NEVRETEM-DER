@@ -57,8 +57,6 @@ private:
     bool isFormValid() const;
     void loadPhotoFromUrl(const QString& url);
     QString formatPhoneNumber(const QString& input);
-    QString validateTurkishPhoneNumber(const QString& phoneNumber) const;
-    QString getTurkishOperatorName(const QString& phoneNumber) const;
     QStringList loadUniversities();
     QString capitalizeTurkish(const QString& text);
     
@@ -78,7 +76,6 @@ private:
     QComboBox* m_schoolCombo;
     QLineEdit* m_customSchoolEdit;
     QLineEdit* m_numberEdit;
-    QLabel* m_phoneFormatLabel;
     QSpinBox* m_yearSpin;
     QCheckBox* m_graduationCheck;
     QLineEdit* m_photoURLEdit;

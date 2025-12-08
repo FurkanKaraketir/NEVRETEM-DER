@@ -10,6 +10,11 @@ A modern Qt6/C++ application for managing student data with Google Firestore int
 - **Search & Filter**: Real-time search through student data
 - **Data Validation**: Form validation for student information
 - **Responsive Design**: Split-pane layout with detailed student view
+- **Excel Import/Export**: Import and export student data via Excel files
+- **Statistics**: View comprehensive statistics about student data
+- **Auto-Update System**: Automatic update checking via GitHub Releases
+- **Firebase Authentication**: Secure user authentication
+- **Photo Upload**: Upload and manage student photos via Firebase Storage
 
 ## Student Data Structure
 
@@ -85,8 +90,13 @@ Students are stored in Firestore under the collection `students` with the follow
 
 - **Student**: Data model class for student information
 - **FirestoreService**: Handles all Firestore REST API communication
+- **FirebaseAuthService**: Manages user authentication
+- **FirebaseStorageService**: Handles file uploads to Firebase Storage
 - **MainWindow**: Main application window with student list and details
 - **StudentDialog**: Modal dialog for adding/editing students
+- **StatisticsDialog**: Displays comprehensive statistics and charts
+- **UpdateChecker**: Checks for application updates from GitHub Releases
+- **UpdateDialog**: Displays update information to users
 
 ## Error Handling
 
@@ -96,6 +106,32 @@ The application includes comprehensive error handling for:
 - Data validation errors
 - JSON parsing errors
 
+## Deployment
+
+### Windows
+
+Use the provided deployment script to create a distributable package:
+
+```bash
+deploy_windows.bat
+```
+
+This will create a `deploy_windows` folder with all necessary Qt libraries and dependencies.
+
+For more details, see [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md).
+
+## Auto-Update System
+
+The app includes automatic updates from GitHub Releases.
+
+**Setup:**
+1. Edit `src/mainwindow.cpp` line ~1690: Set your GitHub repo path `"username/repo"`
+2. Update version: `update_version.bat 1.0.1`
+3. Release: `git tag v1.0.1 && git push origin v1.0.1`
+4. GitHub Actions builds & publishes automatically
+
+**Users:** Go to Help → Check for Updates → Click "Install Now" - the app downloads, extracts, and installs automatically.
+
 ## Contributing
 
 1. Fork the repository
@@ -103,6 +139,12 @@ The application includes comprehensive error handling for:
 3. Make your changes
 4. Add tests if applicable
 5. Submit a pull request
+
+## Support
+
+For support or questions:
+- Create an issue on GitHub
+- Contact: FURKAN KARAKETIR +90 551 145 09 68
 
 ## License
 

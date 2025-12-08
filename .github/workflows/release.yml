@@ -1,0 +1,125 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.0.0, v1.2.3, etc.
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: '6.7.0'
+        host: 'windows'
+        target: 'desktop'
+        arch: 'win64_msvc2019_64'
+        modules: 'qtnetworkauth'
+        cache: true
+    
+    - name: Setup MSVC
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+    
+    - name: Create build directory
+      run: |
+        mkdir build
+        cd build
+    
+    - name: Configure CMake
+      run: |
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -G "NMake Makefiles"
+    
+    - name: Build
+      run: |
+        cd build
+        cmake --build . --config Release
+    
+    - name: Deploy with windeployqt
+      run: |
+        mkdir deploy_windows
+        copy build\bin\StudentManager.exe deploy_windows\
+        copy config.example.ini deploy_windows\
+        copy build\bin\universities.json deploy_windows\
+        copy src\logo.jpg deploy_windows\
+        windeployqt.exe --verbose 2 --dir deploy_windows --libdir deploy_windows --plugindir deploy_windows\plugins --no-translations --no-system-d3d-compiler --no-opengl-sw deploy_windows\StudentManager.exe
+    
+    - name: Create README for distribution
+      run: |
+        echo "NEVRETEM-DER MBS - Windows Distribution" > deploy_windows\README.txt
+        echo "========================================" >> deploy_windows\README.txt
+        echo. >> deploy_windows\README.txt
+        echo "Version: ${{ github.ref_name }}" >> deploy_windows\README.txt
+        echo. >> deploy_windows\README.txt
+        echo "To run the application:" >> deploy_windows\README.txt
+        echo "1. Double-click StudentManager.exe" >> deploy_windows\README.txt
+        echo. >> deploy_windows\README.txt
+        echo "Configuration:" >> deploy_windows\README.txt
+        echo "- Copy config.example.ini to config.ini" >> deploy_windows\README.txt
+        echo "- Edit config.ini with your Firebase credentials" >> deploy_windows\README.txt
+    
+    - name: Install NSIS (optional, for installer)
+      run: |
+        choco install nsis -y
+      continue-on-error: true
+    
+    - name: Create Installer with NSIS
+      run: |
+        if (Test-Path "C:\Program Files (x86)\NSIS\makensis.exe") {
+          & "C:\Program Files (x86)\NSIS\makensis.exe" create_installer.nsi
+        } else {
+          Write-Host "NSIS not found, skipping installer creation"
+        }
+      shell: pwsh
+      continue-on-error: true
+    
+    - name: Create ZIP archive
+      run: |
+        Compress-Archive -Path deploy_windows\* -DestinationPath NEVRETEM-DER_MBS_Windows_${{ github.ref_name }}.zip
+      shell: pwsh
+    
+    - name: Extract version from tag
+      id: version
+      run: |
+        $version = "${{ github.ref_name }}" -replace '^v', ''
+        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+      shell: pwsh
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: NEVRETEM-DER MBS v${{ steps.version.outputs.VERSION }}
+        body: |
+          ## NEVRETEM-DER MBS Release v${{ steps.version.outputs.VERSION }}
+          
+          ### What's New
+          - Update release notes here (edit this after release is created)
+          
+          ### Installation
+          1. Download the ZIP file below
+          2. Extract to a folder on your computer
+          3. Run `StudentManager.exe`
+          4. Configure your Firebase credentials in `config.ini`
+          
+          ### System Requirements
+          - Windows 10 or later
+          - Visual C++ Redistributable 2022 (usually already installed)
+          
+          ### Support
+          For issues or questions, contact: FURKAN KARAKETIR +90 551 145 09 68
+        files: |
+          NEVRETEM-DER_MBS_Windows_*.zip
+          NEVRETEM-DER_MBS_Setup.exe
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

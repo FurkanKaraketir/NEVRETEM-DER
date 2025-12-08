@@ -31,6 +31,7 @@ Q_DECLARE_LOGGING_CATEGORY(dataLog)
 #include "firebasestorageservice.h"
 #include "studentdialog.h"
 #include "firebaseauthservice.h"
+#include "updatechecker.h"
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -82,6 +83,12 @@ private slots:
     void onExportToExcel();
     void onImportFromExcel();
     void onShowStatistics();
+    
+    // Update checker slots
+    void onCheckForUpdates();
+    void onUpdateAvailable(const QString& newVersion, const QString& downloadUrl, const QString& releaseNotes);
+    void onNoUpdateAvailable();
+    void onUpdateCheckFailed(const QString& error);
 
 private:
     void setupUI();
@@ -156,6 +163,7 @@ private:
     FirestoreService* m_firestoreService;
     FirebaseStorageService* m_storageService;
     FirebaseAuthService* m_authService;
+    UpdateChecker* m_updateChecker;
     
     // Photo loading management
     QHash<QString, QLabel*> m_photoLabels; // URL -> QLabel mapping for image loading
@@ -170,6 +178,7 @@ private:
     QAction* m_exportExcelAction;
     QAction* m_importExcelAction;
     QAction* m_statisticsAction;
+    QAction* m_checkUpdatesAction;
 };
 
 #endif // MAINWINDOW_H

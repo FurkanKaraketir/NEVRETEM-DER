@@ -24,6 +24,7 @@
 #include "xlsxformat.h"
 #include "xlsxcellrange.h"
 #include "statisticsdialog.h"
+#include "updatedialog.h"
 
 using namespace QXlsx;
 
@@ -33,6 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
     , m_firestoreService(new FirestoreService(this))
     , m_storageService(new FirebaseStorageService(this))
     , m_authService(nullptr)
+    , m_updateChecker(new UpdateChecker(this))
     , m_pendingPhotoDialog(nullptr)
 {
     // Set window icon
@@ -112,6 +114,7 @@ void MainWindow::setAuthService(FirebaseAuthService* authService)
 
 void MainWindow::setupUI()
 {
+    MainWindow::setWindowState(Qt::WindowMaximized);
     m_centralWidget = new QWidget(this);
     setCentralWidget(m_centralWidget);
     
@@ -227,14 +230,14 @@ void MainWindow::setupUI()
     // Adjust column widths
     QHeaderView* header = m_studentsTable->horizontalHeader();
     header->setStretchLastSection(true);
-    header->resizeSection(0, 90);  // Photo (increased for better visibility)
-    header->resizeSection(1, 150); // Name
-    header->resizeSection(2, 200); // Email
-    header->resizeSection(3, 200); // Field
-    header->resizeSection(4, 150); // School
-    header->resizeSection(5, 120); // Lise Mezuniyet Yılı (increased width)
-    header->resizeSection(6, 100); // Number
-    header->resizeSection(7, 160); // Üniversite Mezun Durumu (increased width for longer text)
+    header->resizeSection(0, 85);  // Photo - slightly reduced, photos are 70x70
+    header->resizeSection(1, 180); // Name - increased for longer Turkish names
+    header->resizeSection(2, 70); // Email - increased for longer email addresses
+    header->resizeSection(3, 200); // Field - reduced, field names are typically shorter
+    header->resizeSection(4, 280); // School - increased significantly for long university names
+    header->resizeSection(5, 100); // Lise Mezuniyet Yılı - reduced, only needs 4 digits
+    header->resizeSection(6, 140); // Number - increased for phone number visibility
+    header->resizeSection(7, 180); // Üniversite Mezun Durumu - increased for "Üniversiteye Gitmedi"
     
     m_leftLayout->addWidget(m_studentsTable);
     
@@ -305,7 +308,11 @@ void MainWindow::setupUI()
     // Add panels to splitter
     m_mainSplitter->addWidget(m_leftPanel);
     m_mainSplitter->addWidget(m_rightPanel);
-    m_mainSplitter->setSizes({600, 300});
+    
+    // Set stretch factors: left panel gets 3x more space than right panel (4:1 ratio)
+    m_mainSplitter->setStretchFactor(0, 5); // Left panel (student list)
+    m_mainSplitter->setStretchFactor(1, 1); // Right panel (details)
+
     
     // Connect signals
     connect(m_searchEdit, &QLineEdit::textChanged, this, &MainWindow::onSearchTextChanged);
@@ -500,6 +507,12 @@ void MainWindow::setupMenuBar()
     
     // Help menu
     QMenu* helpMenu = menuBar()->addMenu("&Yardım");
+    
+    m_checkUpdatesAction = new QAction("&Güncellemeleri Kontrol Et", this);
+    connect(m_checkUpdatesAction, &QAction::triggered, this, &MainWindow::onCheckForUpdates);
+    helpMenu->addAction(m_checkUpdatesAction);
+    
+    helpMenu->addSeparator();
     
     m_aboutAction = new QAction("&Hakkında", this);
     connect(m_aboutAction, &QAction::triggered, [this]() {
@@ -1667,4 +1680,67 @@ void MainWindow::onImportFromExcel()
     if (importedCount > 0) {
         onRefreshStudents();
     }
+}
+
+void MainWindow::onCheckForUpdates()
+{
+    QString repoPath = "FurkanKaraketir/NEVRETEM-DER";
+    QString currentVersion = QApplication::applicationVersion();
+    
+    qCInfo(dataLog) << "Checking for updates. Current version:" << currentVersion;
+    m_statusLabel->setText("Güncellemeler kontrol ediliyor...");
+    
+    // Connect signals
+    connect(m_updateChecker, &UpdateChecker::updateAvailable, 
+            this, &MainWindow::onUpdateAvailable, Qt::UniqueConnection);
+    connect(m_updateChecker, &UpdateChecker::noUpdateAvailable, 
+            this, &MainWindow::onNoUpdateAvailable, Qt::UniqueConnection);
+    connect(m_updateChecker, &UpdateChecker::checkFailed, 
+            this, &MainWindow::onUpdateCheckFailed, Qt::UniqueConnection);
+    
+    // Check for updates (not silent, show message even if no update)
+    m_updateChecker->checkForUpdates(repoPath, currentVersion, false);
+}
+
+void MainWindow::onUpdateAvailable(const QString& newVersion, 
+                                    const QString& downloadUrl, 
+                                    const QString& releaseNotes)
+{
+    qCInfo(dataLog) << "Update available:" << newVersion << "at" << downloadUrl;
+    m_statusLabel->setText("Yeni güncelleme mevcut!");
+    
+    QString currentVersion = QApplication::applicationVersion();
+    UpdateDialog dialog(currentVersion, newVersion, downloadUrl, releaseNotes, this);
+    
+    int result = dialog.exec();
+    
+    if (result == QDialog::Accepted) {
+        qCInfo(dataLog) << "User accepted update download";
+        m_statusLabel->setText("Tarayıcı açılıyor...");
+    } else {
+        qCInfo(dataLog) << "User declined update";
+        m_statusLabel->setText("Güncelleme atlandı");
+    }
+}
+
+void MainWindow::onNoUpdateAvailable()
+{
+    qCInfo(dataLog) << "No update available";
+    m_statusLabel->setText("En güncel sürümü kullanıyorsunuz");
+    
+    QMessageBox::information(this, "Güncel", 
+        QString("En güncel sürümü kullanıyorsunuz (v%1).\n\n"
+                "Yeni güncellemeler mevcut değil.")
+            .arg(QApplication::applicationVersion()));
+}
+
+void MainWindow::onUpdateCheckFailed(const QString& error)
+{
+    qCWarning(dataLog) << "Update check failed:" << error;
+    m_statusLabel->setText("Güncelleme kontrolü başarısız");
+    
+    QMessageBox::warning(this, "Güncelleme Kontrolü Başarısız",
+        QString("Güncellemeler kontrol edilirken bir hata oluştu:\n\n%1\n\n"
+                "Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.")
+            .arg(error));
 }

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(StudentManager VERSION 1.0.0)
+project(StudentManager VERSION 1.0.1)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -42,6 +42,10 @@ set(SOURCES
     src/logindialog.cpp
     src/statisticsdialog.cpp
     src/thememanager.cpp
+    src/updatechecker.cpp
+    src/updatedialog.cpp
+    src/updatedownloader.cpp
+    src/updateinstaller.cpp
 )
 
 set(HEADERS
@@ -54,6 +58,10 @@ set(HEADERS
     src/logindialog.h
     src/statisticsdialog.h
     src/thememanager.h
+    src/updatechecker.h
+    src/updatedialog.h
+    src/updatedownloader.h
+    src/updateinstaller.h
 )
 
 set(UI_FILES

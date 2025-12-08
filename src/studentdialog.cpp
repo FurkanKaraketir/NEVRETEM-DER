@@ -160,16 +160,8 @@ void StudentDialog::setupUI()
     
     m_numberEdit = new QLineEdit();
     m_numberEdit->setPlaceholderText("05XX XXX XX XX");
-    m_numberEdit->setMaxLength(18); // Max length for formatted number (supports 5-digit codes)
-    m_numberEdit->setToolTip("Türkiye cep telefonu numarası (Tüm operatörler desteklenir: Turkcell, Vodafone, Türk Telekom, NETGSM, vb.)");
+    m_numberEdit->setMaxLength(18);
     m_contactLayout->addRow("Telefon Numarası:", m_numberEdit);
-    
-    // Phone format feedback label
-    m_phoneFormatLabel = new QLabel();
-    m_phoneFormatLabel->setStyleSheet("color: #666; font-size: 11px; font-style: italic;");
-    m_phoneFormatLabel->setText("Format: 05XX XXX XX XX");
-    m_phoneFormatLabel->setVisible(false);
-    m_contactLayout->addRow("", m_phoneFormatLabel);
     
     rightColumn->addWidget(m_contactGroup);
     rightColumn->addStretch();
@@ -332,16 +324,6 @@ void StudentDialog::validateForm()
             errorMsg = "Ad zorunludur.";
         } else if (!m_emailEdit->text().trimmed().isEmpty() && !m_emailEdit->hasAcceptableInput()) {
             errorMsg = "Lütfen geçerli bir e-posta adresi girin.";
-        } else if (m_schoolCombo->currentText().isEmpty() || 
-                  (m_schoolCombo->currentText() == "Diğer" && m_customSchoolEdit->text().trimmed().isEmpty())) {
-            errorMsg = "Okul zorunludur.";
-        } else if (m_schoolCombo->currentText() != "Üniversiteye gitmedi" && m_fieldEdit->text().trimmed().isEmpty()) {
-            errorMsg = "Üniversiteye gidiyorsa bölüm zorunludur.";
-        } else if (!m_numberEdit->text().trimmed().isEmpty()) {
-            QString validationError = validateTurkishPhoneNumber(m_numberEdit->text());
-            if (!validationError.isEmpty()) {
-                errorMsg = validationError;
-            }
         }
         
         m_validationLabel->setText(errorMsg);
@@ -353,20 +335,9 @@ void StudentDialog::validateForm()
 
 bool StudentDialog::isFormValid() const
 {
+    // Only name is mandatory
     if (m_nameEdit->text().trimmed().isEmpty()) return false;
     if (!m_emailEdit->text().trimmed().isEmpty() && !m_emailEdit->hasAcceptableInput()) return false;
-    // Check school
-    if (m_schoolCombo->currentText().isEmpty()) return false;
-    if (m_schoolCombo->currentText() == "Diğer" && m_customSchoolEdit->text().trimmed().isEmpty()) return false;
-    
-    // Check field - only required if going to university
-    if (m_schoolCombo->currentText() != "Üniversiteye gitmedi" && m_fieldEdit->text().trimmed().isEmpty()) return false;
-    
-    // Check phone number format if not empty
-    if (!m_numberEdit->text().trimmed().isEmpty()) {
-        QString validationError = validateTurkishPhoneNumber(m_numberEdit->text());
-        if (!validationError.isEmpty()) return false;
-    }
     
     return true;
 }
@@ -717,43 +688,7 @@ void StudentDialog::onPhoneNumberChanged()
         m_numberEdit->blockSignals(true);
         m_numberEdit->setText(formatted);
         m_numberEdit->blockSignals(false);
-        
-        // Get operator name
-        QString operatorName = getTurkishOperatorName(formatted);
-        QString feedbackText = "✓ Otomatik formatlandı";
-        if (!operatorName.isEmpty()) {
-            feedbackText += " - " + operatorName;
-        }
-        
-        m_phoneFormatLabel->setText(feedbackText);
-        m_phoneFormatLabel->setStyleSheet("color: #28a745; font-size: 11px; font-weight: bold;");
-        m_phoneFormatLabel->setVisible(true);
-        
-        // Don't auto-hide, keep showing operator info
-    } else if (!input.isEmpty()) {
-        // Check if format is correct
-        QString validationError = validateTurkishPhoneNumber(input);
-        if (validationError.isEmpty()) {
-            // Valid format - show operator name
-            QString operatorName = getTurkishOperatorName(input);
-            QString feedbackText = "✓ Geçerli numara";
-            if (!operatorName.isEmpty()) {
-                feedbackText += " - " + operatorName;
-            }
-            m_phoneFormatLabel->setText(feedbackText);
-            m_phoneFormatLabel->setStyleSheet("color: #28a745; font-size: 11px; font-weight: bold;");
-            m_phoneFormatLabel->setVisible(true);
-        } else {
-            // Invalid format or operator
-            m_phoneFormatLabel->setText("⚠ " + validationError);
-            m_phoneFormatLabel->setStyleSheet("color: #dc3545; font-size: 11px;");
-            m_phoneFormatLabel->setVisible(true);
-        }
-    } else {
-        m_phoneFormatLabel->setVisible(false);
     }
-    
-    validateForm();
 }
 
 QString StudentDialog::formatPhoneNumber(const QString& input)
@@ -774,36 +709,9 @@ QString StudentDialog::formatPhoneNumber(const QString& input)
         }
     }
     
-    // 5-digit operator codes (NETGSM, KKTC)
-    QStringList fiveDigitCodes = {"05102", "05428", "05488", "05469", "05338"};
-    
-    // Check for 5-digit operator codes (12 digits total: 05XXX + 7 digits)
-    if (digitsOnly.length() == 12 && digitsOnly.startsWith("05")) {
-        QString operatorCode5 = digitsOnly.mid(0, 5);
-        if (fiveDigitCodes.contains(operatorCode5)) {
-            // 05XXX XXX XX XX format
-            return QString("%1 %2 %3")
-                   .arg(digitsOnly.mid(0, 5))
-                   .arg(digitsOnly.mid(5, 3))
-                   .arg(digitsOnly.mid(8, 2) + " " + digitsOnly.mid(10, 2));
-        }
-    }
-    
-    // Check for 5-digit codes with missing leading 0 (11 digits: 5XXX + 7 digits)
-    if (digitsOnly.length() == 11 && digitsOnly.startsWith("5")) {
-        QString operatorCode5 = "0" + digitsOnly.mid(0, 4);
-        if (fiveDigitCodes.contains(operatorCode5)) {
-            // 05XXX XXX XX XX format
-            return QString("0%1 %2 %3")
-                   .arg(digitsOnly.mid(0, 4))
-                   .arg(digitsOnly.mid(4, 3))
-                   .arg(digitsOnly.mid(7, 2) + " " + digitsOnly.mid(9, 2));
-        }
-    }
-    
-    // Standard 4-digit operator codes (11 digits total: 05XX + 7 digits)
+    // Standard format (11 digits total: 05XX + 7 digits)
     if (digitsOnly.length() == 11 && digitsOnly.startsWith("05")) {
-        // Already in correct length with 0: 05XXXXXXXXX -> 05XX XXX XX XX
+        // 05XXXXXXXXX -> 05XX XXX XX XX
         return QString("%1 %2 %3")
                .arg(digitsOnly.mid(0, 4))
                .arg(digitsOnly.mid(4, 3))
@@ -837,148 +745,6 @@ QString StudentDialog::formatPhoneNumber(const QString& input)
     
     // If no formatting rule applies, return original input
     return input;
-}
-
-QString StudentDialog::validateTurkishPhoneNumber(const QString& phoneNumber) const
-{
-    // Remove all spaces and dashes for validation
-    QString cleaned = phoneNumber;
-    cleaned.remove(' ').remove('-');
-    
-    // Check basic format: must start with 05 and be 11 digits minimum
-    if (!cleaned.startsWith("05") || cleaned.length() < 11) {
-        return "Telefon numarası '05XX XXX XX XX' formatında olmalıdır.";
-    }
-    
-    // Check if all characters are digits
-    for (QChar c : cleaned) {
-        if (!c.isDigit()) {
-            return "Telefon numarası sadece rakam içermelidir.";
-        }
-    }
-    
-    // Extract the operator code (can be 4 or 5 digits: 05XX or 05XXX)
-    QString operatorCode4 = cleaned.mid(0, 4);  // First 4 digits
-    QString operatorCode5 = cleaned.length() >= 5 ? cleaned.mid(0, 5) : "";  // First 5 digits
-    
-    // 5-digit operator codes (NETGSM and KKTC operators)
-    QStringList validOperatorCodes5 = {
-        // NETGSM (MVNO)
-        "05102",
-        // KKTC Telsim (Northern Cyprus)
-        "05428", "05488", "05469",
-        // KKTC Turkcell (Northern Cyprus)
-        "05338"
-    };
-    
-    // Check 5-digit codes first (more specific)
-    if (!operatorCode5.isEmpty() && validOperatorCodes5.contains(operatorCode5)) {
-        // For 5-digit codes, number should be 12 digits total: 05XXX + 7 digits
-        if (cleaned.length() != 12) {
-            return QString("Operatör kodu %1 için numara 12 haneli olmalıdır.").arg(operatorCode5);
-        }
-        return ""; // Valid 5-digit code
-    }
-    
-    // Standard 4-digit operator codes
-    QStringList validOperatorCodes4 = {
-        // Türk Telekom
-        "0501", "0505", "0506", "0507",
-        // Türk Telekom - BİMcell (MVNO)
-        "0551", "0552", "0553", "0554", "0555", "0559",
-        // Turkcell
-        "0510", "0530", "0531", "0532", "0533", "0534", "0535", "0536", "0537", "0538", "0539",
-        // Turkcell - Bursa Mobile (MVNO)
-        "0516",
-        // Turkcell - 61Cell (MVNO)
-        "0561",
-        // Vodafone
-        "0540", "0541", "0542", "0543", "0544", "0545", "0546", "0547", "0548", "0549"
-    };
-    
-    if (!validOperatorCodes4.contains(operatorCode4)) {
-        return QString("Geçersiz operatör kodu: %1. Lütfen geçerli bir Türkiye cep telefonu numarası girin.").arg(operatorCode4);
-    }
-    
-    // For 4-digit codes, number should be 11 digits total: 05XX + 7 digits
-    if (cleaned.length() != 11) {
-        return QString("Telefon numarası 11 haneli olmalıdır (05XX XXX XX XX formatında).");
-    }
-    
-    return ""; // Valid
-}
-
-QString StudentDialog::getTurkishOperatorName(const QString& phoneNumber) const
-{
-    // Remove all spaces and dashes
-    QString cleaned = phoneNumber;
-    cleaned.remove(' ').remove('-');
-    
-    if (cleaned.length() < 4 || !cleaned.startsWith("05")) {
-        return "";
-    }
-    
-    // Check for 5-digit operator codes first
-    if (cleaned.length() >= 5) {
-        QString operatorCode5 = cleaned.mid(0, 5);
-        
-        // NETGSM
-        if (operatorCode5 == "05102") {
-            return "NETGSM";
-        }
-        
-        // KKTC Telsim (Northern Cyprus)
-        if (operatorCode5 == "05428" || operatorCode5 == "05488" || operatorCode5 == "05469") {
-            return "KKTC Telsim";
-        }
-        
-        // KKTC Turkcell (Northern Cyprus)
-        if (operatorCode5 == "05338") {
-            return "KKTC Turkcell";
-        }
-    }
-    
-    // Extract the operator code (first 4 digits: 05XX)
-    QString operatorCode = cleaned.mid(0, 4);
-    
-    // Türk Telekom
-    if (operatorCode == "0501" || operatorCode == "0505" || 
-        operatorCode == "0506" || operatorCode == "0507") {
-        return "Türk Telekom";
-    }
-    
-    // Türk Telekom - BİMcell (MVNO)
-    if (operatorCode == "0551" || operatorCode == "0552" || 
-        operatorCode == "0553" || operatorCode == "0554" || 
-        operatorCode == "0555" || operatorCode == "0559") {
-        return "Türk Telekom (BİMcell)";
-    }
-    
-    // Turkcell
-    if (operatorCode == "0510" || operatorCode.startsWith("053")) {
-        return "Turkcell";
-    }
-    
-    // Turkcell - Bursa Mobile (MVNO)
-    if (operatorCode == "0516") {
-        return "Turkcell (Bursa Mobile)";
-    }
-    
-    // Turkcell - 61Cell (MVNO)
-    if (operatorCode == "0561") {
-        return "Turkcell (61Cell)";
-    }
-    
-    // Vodafone
-    if (operatorCode == "0540" || operatorCode == "0541" ||
-        operatorCode == "0542" || operatorCode == "0543" || 
-        operatorCode == "0544" || operatorCode == "0545" ||
-        operatorCode == "0546" || operatorCode == "0547" ||
-        operatorCode == "0548" || operatorCode == "0549") {
-        return "Vodafone";
-    }
-    
-    return "";
 }
 
 void StudentDialog::uploadDeferredPhoto(const QString& studentId)
