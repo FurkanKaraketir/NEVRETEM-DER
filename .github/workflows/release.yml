@@ -1,9 +1,9 @@
-name: Create Release
+name: Build and Release
 
 on:
   push:
     tags:
-      - 'v*.*.*'  # Triggers on version tags like v1.0.0, v1.2.3, etc.
+      - 'v*'  # Trigger on version tags like v1.0.0, v1.0.1, etc.
 
 jobs:
   build-and-release:
@@ -12,114 +12,130 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+      
     - name: Install Qt
       uses: jurplel/install-qt-action@v3
       with:
-        version: '6.7.0'
-        host: 'windows'
-        target: 'desktop'
-        arch: 'win64_msvc2019_64'
-        modules: 'qtnetworkauth'
+        version: '6.9.1'
+        arch: 'win64_mingw'
+        tools: 'tools_mingw1310 qt.tools.mingw1310'
         cache: true
-    
-    - name: Setup MSVC
-      uses: ilammy/msvc-dev-cmd@v1
-      with:
-        arch: x64
-    
-    - name: Create build directory
+        
+    - name: Set up MinGW
+      run: |
+        echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        echo "Adding MinGW to PATH"
+        
+    - name: Configure CMake
       run: |
         mkdir build
         cd build
-    
-    - name: Configure CMake
-      run: |
-        cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -G "NMake Makefiles"
-    
+        cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$env:Qt6_DIR
+        
     - name: Build
       run: |
         cd build
-        cmake --build . --config Release
-    
-    - name: Deploy with windeployqt
+        mingw32-make -j$env:NUMBER_OF_PROCESSORS
+        
+    - name: Deploy Windows
       run: |
-        mkdir deploy_windows
-        copy build\bin\StudentManager.exe deploy_windows\
-        copy config.example.ini deploy_windows\
-        copy build\bin\universities.json deploy_windows\
-        copy src\logo.jpg deploy_windows\
-        windeployqt.exe --verbose 2 --dir deploy_windows --libdir deploy_windows --plugindir deploy_windows\plugins --no-translations --no-system-d3d-compiler --no-opengl-sw deploy_windows\StudentManager.exe
-    
-    - name: Create README for distribution
-      run: |
-        echo "NEVRETEM-DER MBS - Windows Distribution" > deploy_windows\README.txt
-        echo "========================================" >> deploy_windows\README.txt
-        echo. >> deploy_windows\README.txt
-        echo "Version: ${{ github.ref_name }}" >> deploy_windows\README.txt
-        echo. >> deploy_windows\README.txt
-        echo "To run the application:" >> deploy_windows\README.txt
-        echo "1. Double-click StudentManager.exe" >> deploy_windows\README.txt
-        echo. >> deploy_windows\README.txt
-        echo "Configuration:" >> deploy_windows\README.txt
-        echo "- Copy config.example.ini to config.ini" >> deploy_windows\README.txt
-        echo "- Edit config.ini with your Firebase credentials" >> deploy_windows\README.txt
-    
-    - name: Install NSIS (optional, for installer)
-      run: |
-        choco install nsis -y
-      continue-on-error: true
-    
-    - name: Create Installer with NSIS
-      run: |
-        if (Test-Path "C:\Program Files (x86)\NSIS\makensis.exe") {
-          & "C:\Program Files (x86)\NSIS\makensis.exe" create_installer.nsi
-        } else {
-          Write-Host "NSIS not found, skipping installer creation"
+        # Create deployment directory
+        New-Item -ItemType Directory -Force -Path "deploy_windows"
+        
+        # Copy executable
+        Copy-Item "build\bin\StudentManager.exe" "deploy_windows\"
+        
+        # Copy configuration and data files
+        Copy-Item "config.example.ini" "deploy_windows\"
+        if (Test-Path "config.ini") {
+            Copy-Item "config.ini" "deploy_windows\"
         }
-      shell: pwsh
-      continue-on-error: true
-    
+        if (Test-Path "build\bin\universities.json") {
+            Copy-Item "build\bin\universities.json" "deploy_windows\"
+        }
+        if (Test-Path "src\logo.jpg") {
+            Copy-Item "src\logo.jpg" "deploy_windows\"
+        }
+        
+        # Run windeployqt
+        & "$env:Qt6_DIR\bin\windeployqt.exe" --verbose 2 --dir "deploy_windows" --libdir "deploy_windows" --plugindir "deploy_windows\plugins" --no-translations --no-system-d3d-compiler --no-opengl-sw --no-compiler-runtime "deploy_windows\StudentManager.exe"
+        
+        # Copy MinGW runtime libraries
+        Copy-Item "$env:IQTA_TOOLS\mingw1310_64\bin\libgcc_s_seh-1.dll" "deploy_windows\" -ErrorAction SilentlyContinue
+        Copy-Item "$env:IQTA_TOOLS\mingw1310_64\bin\libstdc++-6.dll" "deploy_windows\" -ErrorAction SilentlyContinue
+        Copy-Item "$env:IQTA_TOOLS\mingw1310_64\bin\libwinpthread-1.dll" "deploy_windows\" -ErrorAction SilentlyContinue
+        
+        # Create launcher script
+        @"
+        @echo off
+        cd /d "%~dp0"
+        start StudentManager.exe
+        "@ | Out-File -FilePath "deploy_windows\run.bat" -Encoding ASCII
+        
+        # Create README
+        $version = "${{ github.ref_name }}" -replace '^v',''
+        @"
+        NEVRETEM-DER MBS - Windows Distribution
+        =======================================
+        
+        Version: $version
+        
+        This package contains the NEVRETEM-DER MBS application
+        with all required Qt libraries for Windows.
+        
+        To run the application:
+        1. Double-click StudentManager.exe
+           OR
+        2. Double-click run.bat
+        
+        Configuration:
+        - Copy config.example.ini to config.ini
+        - Edit config.ini with your Firebase credentials
+        
+        Updates:
+        - The application can check for updates automatically
+        - Go to Help -> Check for Updates to get the latest version
+        
+        System Requirements:
+        - Windows 10 or later
+        
+        For support, contact: FURKAN KARAKETIR +90 551 145 09 68
+        "@ | Out-File -FilePath "deploy_windows\README.txt" -Encoding UTF8
+        
     - name: Create ZIP archive
       run: |
-        Compress-Archive -Path deploy_windows\* -DestinationPath NEVRETEM-DER_MBS_Windows_${{ github.ref_name }}.zip
-      shell: pwsh
-    
-    - name: Extract version from tag
-      id: version
+        Compress-Archive -Path "deploy_windows\*" -DestinationPath "NEVRETEM-DER_MBS_Windows.zip" -Force
+        
+    - name: Get version from tag
+      id: get_version
       run: |
-        $version = "${{ github.ref_name }}" -replace '^v', ''
-        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
-      shell: pwsh
-    
+        $version = "${{ github.ref_name }}" -replace '^v',''
+        echo "VERSION=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        
     - name: Create Release
+      id: create_release
       uses: softprops/action-gh-release@v1
-      with:
-        name: NEVRETEM-DER MBS v${{ steps.version.outputs.VERSION }}
-        body: |
-          ## NEVRETEM-DER MBS Release v${{ steps.version.outputs.VERSION }}
-          
-          ### What's New
-          - Update release notes here (edit this after release is created)
-          
-          ### Installation
-          1. Download the ZIP file below
-          2. Extract to a folder on your computer
-          3. Run `StudentManager.exe`
-          4. Configure your Firebase credentials in `config.ini`
-          
-          ### System Requirements
-          - Windows 10 or later
-          - Visual C++ Redistributable 2022 (usually already installed)
-          
-          ### Support
-          For issues or questions, contact: FURKAN KARAKETIR +90 551 145 09 68
-        files: |
-          NEVRETEM-DER_MBS_Windows_*.zip
-          NEVRETEM-DER_MBS_Setup.exe
-        draft: false
-        prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+      with:
+        name: Release ${{ steps.get_version.outputs.VERSION }}
+        draft: false
+        prerelease: false
+        body: |
+          ## NEVRETEM-DER MBS v${{ steps.get_version.outputs.VERSION }}
+          
+          ### Changes
+          <!-- Add release notes here -->
+          
+          ### Installation
+          1. Download `NEVRETEM-DER_MBS_Windows.zip`
+          2. Extract to a folder
+          3. Run `StudentManager.exe`
+          
+          ### Requirements
+          - Windows 10 or later
+          
+          ### Auto-Update
+          Existing users can update automatically via Help → Check for Updates in the application.
+        files: |
+          NEVRETEM-DER_MBS_Windows.zip

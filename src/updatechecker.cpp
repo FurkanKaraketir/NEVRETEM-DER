@@ -39,7 +39,14 @@ void UpdateChecker::onReplyFinished(QNetworkReply* reply)
     reply->deleteLater();
 
     if (reply->error() != QNetworkReply::NoError) {
-        emit checkFailed(QString("Network error: %1").arg(reply->errorString()));
+        // Special handling for 404 - likely no releases exist yet
+        if (reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 404) {
+            if (!m_silent) {
+                emit checkFailed("Henüz yayınlanmış bir sürüm bulunamadı.\n\nİlk sürüm için GitHub'da release oluşturmanız gerekiyor.");
+            }
+        } else {
+            emit checkFailed(QString("Ağ hatası: %1").arg(reply->errorString()));
+        }
         return;
     }
 
