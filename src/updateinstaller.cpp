@@ -44,15 +44,20 @@ bool UpdateInstaller::extractZipWindows(const QString& zipPath, const QString& e
 
     emit extractionProgress(30);
 
-    // Use PowerShell to extract ZIP
+    // Use PowerShell to extract ZIP with proper escaping
     QProcess process;
-    QString command = QString("powershell -NoProfile -ExecutionPolicy Bypass -Command "
-                             "\"Expand-Archive -Path '%1' -DestinationPath '%2' -Force\"")
+    
+    // Build PowerShell command with proper escaping
+    QString psCommand = QString("Expand-Archive -LiteralPath '%1' -DestinationPath '%2' -Force")
                         .arg(zipPath, extractPath);
-
+    
     emit extractionProgress(50);
 
-    process.start("cmd.exe", QStringList() << "/c" << command);
+    // Start PowerShell directly (not through cmd.exe) for better reliability
+    process.start("powershell.exe", QStringList() 
+                  << "-NoProfile" 
+                  << "-ExecutionPolicy" << "Bypass"
+                  << "-Command" << psCommand);
     
     if (!process.waitForStarted(5000)) {
         emit extractionFailed("Failed to start extraction process");
@@ -63,13 +68,28 @@ bool UpdateInstaller::extractZipWindows(const QString& zipPath, const QString& e
 
     if (!process.waitForFinished(60000)) { // 60 second timeout
         emit extractionFailed("Extraction timeout");
+        process.kill();
         return false;
     }
 
     emit extractionProgress(90);
 
+    // Check for errors
+    QString errorOutput = QString::fromLocal8Bit(process.readAllStandardError());
     if (process.exitCode() != 0) {
-        emit extractionFailed(QString("Extraction failed: %1").arg(QString(process.readAllStandardError())));
+        emit extractionFailed(QString("Extraction failed (exit code %1): %2")
+                             .arg(process.exitCode())
+                             .arg(errorOutput.isEmpty() ? "Unknown error" : errorOutput));
+        return false;
+    }
+
+    // Verify that files were actually extracted
+    QDir extractDir(extractPath);
+    QStringList allEntries = extractDir.entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
+    
+    if (allEntries.isEmpty()) {
+        emit extractionFailed("Extraction completed but no files found in destination. "
+                             "The ZIP file may be corrupted or empty.");
         return false;
     }
 
