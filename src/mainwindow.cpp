@@ -424,7 +424,7 @@ void MainWindow::setupFilterUI()
     m_filterLayout->addWidget(m_graduationFilterCombo, 2, 3);
     
     // Row 3: Clear filters button with enhanced styling
-    m_clearFiltersButton = new QPushButton("🗑️ Filtreleri Temizle");
+    m_clearFiltersButton = new QPushButton("Filtreleri Temizle");
     m_clearFiltersButton->setObjectName("clearFiltersButton");
     m_clearFiltersButton->setIcon(style()->standardIcon(QStyle::SP_DialogResetButton));
     m_filterLayout->addWidget(m_clearFiltersButton, 3, 0, 1, 4);
