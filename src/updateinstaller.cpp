@@ -84,6 +84,21 @@ bool UpdateInstaller::extractZipWindows(const QString& zipPath, const QString& e
 void UpdateInstaller::installUpdate(const QString& updatePath, const QString& currentAppPath, const QString& executableName)
 {
 #ifdef Q_OS_WIN
+    // Check if the update files are in a subdirectory (common when extracting ZIP files)
+    QString actualUpdatePath = updatePath;
+    QDir updateDir(updatePath);
+    QStringList entries = updateDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    
+    // If there's only one subdirectory and no files, the content is likely in that subdirectory
+    if (entries.size() == 1 && updateDir.entryList(QDir::Files).isEmpty()) {
+        QString subDir = updateDir.filePath(entries.first());
+        QDir subDirObj(subDir);
+        // Check if the subdirectory contains files (the actual update)
+        if (!subDirObj.entryList(QDir::Files).isEmpty()) {
+            actualUpdatePath = subDir;
+        }
+    }
+    
     // Create a batch file to handle the update
     QString batchPath = QDir::temp().filePath("nevretem_updater.bat");
     QFile batchFile(batchPath);
@@ -120,14 +135,14 @@ void UpdateInstaller::installUpdate(const QString& updatePath, const QString& cu
     out << ":INSTALL\r\n";
     out << "echo Application closed. Installing update...\r\n";
     out << "echo.\r\n";
-    out << "echo Source: " << QDir::toNativeSeparators(updatePath) << "\r\n";
+    out << "echo Source: " << QDir::toNativeSeparators(actualUpdatePath) << "\r\n";
     out << "echo Target: " << QDir::toNativeSeparators(currentAppPath) << "\r\n";
     out << "echo.\r\n";
     out << "\r\n";
     
     // Use robocopy which is more reliable than xcopy for this purpose
-    out << "robocopy \"" << QDir::toNativeSeparators(updatePath) << "\" \"" 
-        << QDir::toNativeSeparators(currentAppPath) << "\" /E /IS /IT /NFL /NDL /NP /XO\r\n";
+    out << "robocopy \"" << QDir::toNativeSeparators(actualUpdatePath) << "\" \"" 
+        << QDir::toNativeSeparators(currentAppPath) << "\" /E /IS /IT /XO\r\n";
     out << "\r\n";
     
     // Robocopy exit codes: 0-7 are success, 8+ are errors
@@ -156,10 +171,11 @@ void UpdateInstaller::installUpdate(const QString& updatePath, const QString& cu
     out << "\r\n";
     out << ":END\r\n";
     out << "REM Clean up temporary files\r\n";
+    out << "timeout /t 2 /nobreak >nul\r\n";
     out << "cd /d \"%TEMP%\"\r\n";
-    out << "if exist \"nevretem_update.zip\" del /F /Q \"nevretem_update.zip\"\r\n";
-    out << "if exist \"nevretem_update_extracted\" rd /S /Q \"nevretem_update_extracted\"\r\n";
-    out << "del \"%~f0\"\r\n";
+    out << "if exist \"nevretem_update.zip\" del /F /Q \"nevretem_update.zip\" 2>nul\r\n";
+    out << "if exist \"nevretem_update_extracted\" rd /S /Q \"nevretem_update_extracted\" 2>nul\r\n";
+    out << "(goto) 2>nul & del \"%~f0\"\r\n";
     
     batchFile.close();
 

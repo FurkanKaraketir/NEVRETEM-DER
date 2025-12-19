@@ -3,7 +3,7 @@
 # Download NSIS from: https://nsis.sourceforge.io/
 
 !define APP_NAME "NEVRETEM-DER MBS"
-!define APP_VERSION "1.0.7"
+!define APP_VERSION "1.0.9"
 !define APP_PUBLISHER "NEVRETEM-DER"
 !define APP_URL "https://nevretem-der.org"
 !define APP_DESCRIPTION "Mezun Bilgi Sistemi - Student Management System"
@@ -44,7 +44,7 @@ RequestExecutionLevel admin
 !insertmacro MUI_LANGUAGE "Turkish"
 
 # Version information
-VIProductVersion "1.0.7.0"
+VIProductVersion "1.0.9.0"
 VIAddVersionKey "ProductName" "${APP_NAME}"
 VIAddVersionKey "ProductVersion" "${APP_VERSION}"
 VIAddVersionKey "CompanyName" "${APP_PUBLISHER}"
