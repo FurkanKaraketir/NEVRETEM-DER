@@ -11,7 +11,7 @@ cd build
 
 REM Configure with CMake using MinGW Makefiles
 echo Configuring with CMake...
-cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=C:/Qt/6.9.1/mingw_64
+cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=C:/Qt/6.9.1/mingw_64
 
 REM Check if configuration was successful
 if %errorlevel% neq 0 (

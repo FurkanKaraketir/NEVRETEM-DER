@@ -94,31 +94,77 @@ void UpdateInstaller::installUpdate(const QString& updatePath, const QString& cu
 
     QTextStream out(&batchFile);
     out << "@echo off\r\n";
-    out << "echo NEVRETEM-DER MBS Updater\r\n";
+    out << "title NEVRETEM-DER MBS Updater\r\n";
+    out << "color 0A\r\n";
+    out << "echo ========================================\r\n";
+    out << "echo    NEVRETEM-DER MBS Updater\r\n";
+    out << "echo ========================================\r\n";
+    out << "echo.\r\n";
     out << "echo Waiting for application to close...\r\n";
-    out << "timeout /t 2 /nobreak >nul\r\n";
     out << "\r\n";
-    out << "echo Installing update...\r\n";
-    out << "xcopy /E /I /Y \"" << QDir::toNativeSeparators(updatePath) << "\\*\" \"" 
-        << QDir::toNativeSeparators(currentAppPath) << "\"\r\n";
+    
+    // Wait for the executable to be fully closed (check for up to 15 seconds)
+    out << "set COUNTER=0\r\n";
+    out << ":WAIT_LOOP\r\n";
+    out << "tasklist /FI \"IMAGENAME eq " << executableName << "\" 2>NUL | find /I /N \"" << executableName << "\">NUL\r\n";
+    out << "if \"%ERRORLEVEL%\"==\"0\" (\r\n";
+    out << "    if %COUNTER% GEQ 30 (\r\n";
+    out << "        echo WARNING: Application still running after 15 seconds. Proceeding anyway...\r\n";
+    out << "        goto INSTALL\r\n";
+    out << "    )\r\n";
+    out << "    timeout /t 1 /nobreak >nul\r\n";
+    out << "    set /a COUNTER+=1\r\n";
+    out << "    goto WAIT_LOOP\r\n";
+    out << ")\r\n";
     out << "\r\n";
-    out << "if %ERRORLEVEL% EQU 0 (\r\n";
-    out << "    echo Update installed successfully!\r\n";
+    out << ":INSTALL\r\n";
+    out << "echo Application closed. Installing update...\r\n";
+    out << "echo.\r\n";
+    out << "echo Source: " << QDir::toNativeSeparators(updatePath) << "\r\n";
+    out << "echo Target: " << QDir::toNativeSeparators(currentAppPath) << "\r\n";
+    out << "echo.\r\n";
+    out << "\r\n";
+    
+    // Use robocopy which is more reliable than xcopy for this purpose
+    out << "robocopy \"" << QDir::toNativeSeparators(updatePath) << "\" \"" 
+        << QDir::toNativeSeparators(currentAppPath) << "\" /E /IS /IT /NFL /NDL /NP /XO\r\n";
+    out << "\r\n";
+    
+    // Robocopy exit codes: 0-7 are success, 8+ are errors
+    out << "if %ERRORLEVEL% LEQ 7 (\r\n";
+    out << "    echo.\r\n";
+    out << "    echo ========================================\r\n";
+    out << "    echo    Update installed successfully!\r\n";
+    out << "    echo ========================================\r\n";
+    out << "    echo.\r\n";
+    out << "    echo Starting application...\r\n";
     out << "    timeout /t 2 /nobreak >nul\r\n";
     out << "    cd /d \"" << QDir::toNativeSeparators(currentAppPath) << "\"\r\n";
     out << "    start \"\" \"" << executableName << "\"\r\n";
+    out << "    timeout /t 1 /nobreak >nul\r\n";
     out << ") else (\r\n";
-    out << "    echo Update failed!\r\n";
+    out << "    echo.\r\n";
+    out << "    echo ========================================\r\n";
+    out << "    echo    Update failed! Error: %ERRORLEVEL%\r\n";
+    out << "    echo ========================================\r\n";
+    out << "    echo.\r\n";
+    out << "    echo Please try again or download manually.\r\n";
+    out << "    echo.\r\n";
     out << "    pause\r\n";
+    out << "    goto END\r\n";
     out << ")\r\n";
     out << "\r\n";
-    out << "REM Clean up\r\n";
+    out << ":END\r\n";
+    out << "REM Clean up temporary files\r\n";
+    out << "cd /d \"%TEMP%\"\r\n";
+    out << "if exist \"nevretem_update.zip\" del /F /Q \"nevretem_update.zip\"\r\n";
+    out << "if exist \"nevretem_update_extracted\" rd /S /Q \"nevretem_update_extracted\"\r\n";
     out << "del \"%~f0\"\r\n";
     
     batchFile.close();
 
-    // Launch the batch file
-    QProcess::startDetached("cmd.exe", QStringList() << "/c" << batchPath);
+    // Launch the batch file in a visible window so user can see what's happening
+    QProcess::startDetached("cmd.exe", QStringList() << "/c" << "start" << "cmd.exe" << "/k" << batchPath);
 
     // Give it a moment to start
     QThread::msleep(500);
