@@ -779,7 +779,7 @@ void MainWindow::onStudentsReceived(const QList<Student>& students)
     qCInfo(dataLog) << "Applying filters to student list";
     filterStudents();
     
-    QString statusText = QString("%1 mezun yüklendi").arg(students.size());
+    QString statusText = QString("%1 adet mezun yüklendi").arg(students.size());
     m_statusLabel->setText(statusText);
     qCInfo(dataLog) << "Status updated:" << statusText;
 }
