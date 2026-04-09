@@ -981,7 +981,9 @@ void MainWindow::populateTable(const QList<Student>& students)
         } else {
             graduationStatus = "Aktif";
         }
-        m_studentsTable->setItem(i, 7, new QTableWidgetItem(graduationStatus));
+        QTableWidgetItem* graduationItem = new QTableWidgetItem(graduationStatus);
+        graduationItem->setTextAlignment(Qt::AlignCenter);
+        m_studentsTable->setItem(i, 7, graduationItem);
         m_studentsTable->setItem(i, 8, new QTableWidgetItem(student.getDescription()));
         
         // Store student ID in the name item's data
