@@ -9,6 +9,8 @@
 #include <QStandardPaths>
 #include <QMessageBox>
 #include <QCoreApplication>
+#include <QFileInfo>
+#include <QProcess>
 
 UpdateDialog::UpdateDialog(const QString& currentVersion,
                            const QString& newVersion,
@@ -21,6 +23,7 @@ UpdateDialog::UpdateDialog(const QString& currentVersion,
     , m_isInstalling(false)
     , m_downloader(new UpdateDownloader(this))
     , m_installer(new UpdateInstaller(this))
+    , m_downloadIsZip(true)
 {
     setWindowTitle("Güncelleme Mevcut");
     setMinimumSize(500, 450);
@@ -165,7 +168,12 @@ void UpdateDialog::startDownloadAndInstall()
 
     // Download to temp directory
     QString tempDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
-    m_downloadedFilePath = QDir(tempDir).filePath("nevretem_update.zip");
+    const QString lowerUrl = m_downloadUrl.toLower();
+    m_downloadIsZip = lowerUrl.contains(".zip");
+
+    // Keep extension aligned with selected asset type.
+    const QString tempFileName = m_downloadIsZip ? "nevretem_update.zip" : "nevretem_update.exe";
+    m_downloadedFilePath = QDir(tempDir).filePath(tempFileName);
 
     m_downloader->startDownload(m_downloadUrl, m_downloadedFilePath);
 }
@@ -202,14 +210,37 @@ void UpdateDialog::onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 
 void UpdateDialog::onDownloadFinished(const QString& filePath)
 {
-    m_statusLabel->setText("İndirme tamamlandı! Çıkartılıyor...");
-    showExtractionProgress();
+    if (m_downloadIsZip) {
+        m_statusLabel->setText("İndirme tamamlandı! Çıkartılıyor...");
+        showExtractionProgress();
 
-    // Extract to temp directory
-    QString tempDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
-    QString extractPath = QDir(tempDir).filePath("nevretem_update_extracted");
+        // Extract to temp directory
+        QString tempDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+        QString extractPath = QDir(tempDir).filePath("nevretem_update_extracted");
 
-    m_installer->extractUpdate(filePath, extractPath);
+        m_installer->extractUpdate(filePath, extractPath);
+        return;
+    }
+
+    m_statusLabel->setText("Yükleyici başlatılıyor...");
+    m_progressBar->setVisible(false);
+
+    QMessageBox::information(this, "Güncelleme Hazır",
+        "Yükleyici başlatılacak ve uygulama kapanacak.\n\n"
+        "Lütfen kurulum adımlarını tamamlayın.");
+
+    const QString installerPath = QFileInfo(filePath).absoluteFilePath();
+    if (!QProcess::startDetached(installerPath, QStringList())) {
+        m_isInstalling = false;
+        m_downloadButton->setEnabled(true);
+        m_laterButton->setEnabled(true);
+        m_skipVersionCheckBox->setEnabled(true);
+        QMessageBox::critical(this, "Kurulum Hatası",
+            "Güncelleme yükleyicisi başlatılamadı.");
+        return;
+    }
+
+    QCoreApplication::quit();
 }
 
 void UpdateDialog::onDownloadFailed(const QString& error)

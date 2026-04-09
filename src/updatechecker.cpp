@@ -77,10 +77,10 @@ void UpdateChecker::onReplyFinished(QNetworkReply* reply)
     if (isNewerVersion(latestVersion, m_currentVersion)) {
         QString downloadUrl = extractDownloadUrl(releaseData);
         QString releaseNotes = releaseData.value("body").toString();
-        
+
         if (downloadUrl.isEmpty()) {
-            // If no Windows installer found, use the release page URL
-            downloadUrl = releaseData.value("html_url").toString();
+            emit checkFailed("Bu sürüm için indirilebilir bir Windows paketi bulunamadı.");
+            return;
         }
 
         emit updateAvailable(latestVersion, downloadUrl, releaseNotes);
@@ -101,36 +101,31 @@ bool UpdateChecker::isNewerVersion(const QString& latestVersion, const QString& 
 
 QString UpdateChecker::extractDownloadUrl(const QJsonObject& releaseData)
 {
-    // Look for Windows installer in assets
+    // Look for a downloadable Windows update asset in release assets.
     QJsonArray assets = releaseData.value("assets").toArray();
-    
-    // Priority order for Windows assets
-    QStringList patterns = {
-        "Setup.exe",
-        "Installer.exe", 
-        "setup.exe",
-        "installer.exe",
-        ".exe",
-        ".zip"
-    };
 
-    // Try to find a Windows installer/executable
-    for (const QString& pattern : patterns) {
-        for (const QJsonValue& assetValue : assets) {
-            QJsonObject asset = assetValue.toObject();
-            QString assetName = asset.value("name").toString();
-            
-            if (assetName.contains(pattern, Qt::CaseInsensitive)) {
-                return asset.value("browser_download_url").toString();
-            }
+    QString exeFallbackUrl;
+
+    for (const QJsonValue& assetValue : assets) {
+        QJsonObject asset = assetValue.toObject();
+        const QString assetName = asset.value("name").toString();
+        const QString assetUrl = asset.value("browser_download_url").toString();
+
+        if (assetName.isEmpty() || assetUrl.isEmpty()) {
+            continue;
+        }
+
+        // Prefer ZIP package for in-app extract/install flow.
+        if (assetName.endsWith(".zip", Qt::CaseInsensitive)) {
+            return assetUrl;
+        }
+
+        // Keep EXE as fallback for installer-based updates.
+        if (exeFallbackUrl.isEmpty() && assetName.endsWith(".exe", Qt::CaseInsensitive)) {
+            exeFallbackUrl = assetUrl;
         }
     }
 
-    // If no specific asset found, return the first asset (if any)
-    if (!assets.isEmpty()) {
-        return assets.first().toObject().value("browser_download_url").toString();
-    }
-
-    return QString(); // Return empty string if no download found
+    return exeFallbackUrl;
 }
 

@@ -61,6 +61,7 @@ private:
     UpdateDownloader* m_downloader;
     UpdateInstaller* m_installer;
     QString m_downloadedFilePath;
+    bool m_downloadIsZip;
 };
 
 #endif // UPDATEDIALOG_H
