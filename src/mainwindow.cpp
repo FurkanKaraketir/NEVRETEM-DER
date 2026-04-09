@@ -968,7 +968,9 @@ void MainWindow::populateTable(const QList<Student>& students)
         m_studentsTable->setItem(i, 2, new QTableWidgetItem(student.getEmail()));
         m_studentsTable->setItem(i, 3, new QTableWidgetItem(student.getField()));
         m_studentsTable->setItem(i, 4, new QTableWidgetItem(student.getSchool()));
-        m_studentsTable->setItem(i, 5, new QTableWidgetItem(QString::number(student.getYear())));
+        QTableWidgetItem* yearItem = new QTableWidgetItem(QString::number(student.getYear()));
+        yearItem->setTextAlignment(Qt::AlignCenter);
+        m_studentsTable->setItem(i, 5, yearItem);
         m_studentsTable->setItem(i, 6, new QTableWidgetItem(student.getNumber()));
         // Determine graduation status display
         QString graduationStatus;
