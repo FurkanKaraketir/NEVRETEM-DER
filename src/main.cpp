@@ -50,12 +50,12 @@ int main(int argc, char *argv[])
     qInstallMessageHandler(messageOutput);
     
     qCInfo(configLog) << "=== NEVRETEM-DER MBS Starting ===";
-    qCInfo(configLog) << "Application version:" << "1.1.5";
+    qCInfo(configLog) << "Application version:" << "1.1.6";
     qCInfo(configLog) << "Qt version:" << QT_VERSION_STR;
     
     // Set application properties
     app.setApplicationName("NEVRETEM-DER MBS");
-    app.setApplicationVersion("1.1.5");
+    app.setApplicationVersion("1.1.6");
     app.setOrganizationName("NEVRETEM-DER");
     app.setOrganizationDomain("nevretem-der.org");
     

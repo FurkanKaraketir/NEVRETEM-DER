@@ -162,7 +162,7 @@ void UpdateInstaller::installUpdate(const QString& updatePath, const QString& cu
     
     // Use robocopy which is more reliable than xcopy for this purpose
     out << "robocopy \"" << QDir::toNativeSeparators(actualUpdatePath) << "\" \"" 
-        << QDir::toNativeSeparators(currentAppPath) << "\" /E /IS /IT /XO\r\n";
+        << QDir::toNativeSeparators(currentAppPath) << "\" /E /IS /IT\r\n";
     out << "\r\n";
     
     // Robocopy exit codes: 0-7 are success, 8+ are errors
